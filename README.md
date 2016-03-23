@@ -83,10 +83,17 @@ To actually build mbed firmware using this system, you will need to:
 1. Build the mbed static library and add it to the global libraries:
 
   ```
-  mbed_lib = env.MbedLikeLibrary('mbed', 'mbed/libraries/mbed/',
-                                 ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
-  env.Append(LIBS=mbed_lib)
+  env.Prepend(LIBS =
+    env.MbedLikeLibrary(
+      'mbed', 'mbed/libraries/mbed/',
+      ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
+  )
   ```
+
+  `Prepend` is used since GCC's linker discards unused parts of libraries as
+  they are searched, so the "top-level" library must come first. If libraries
+  are specified in dependency order (with "base" libraries first), then using
+  `Prepend` consistently can avoid nastiness like `--Wl,--whole-archive`.
 
 1. Optionally, turn on compiler optimizations:
   - optimizing for size:
@@ -132,10 +139,11 @@ Import('env')
 env['MBED_LIB_LINKSCRIPTS_ROOT'] = 'mbed/libraries/mbed'
 SConscript('mbed-scons/targets/SConscript-mbed-env-kl25z', exports='env')
 
-mbed_lib = env.MbedLikeLibrary('mbed', 'mbed/libraries/mbed/',
-                               ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
-
-env.Append(LIBS=mbed_lib)
+env.Prepend(LIBS =
+  env.MbedLikeLibrary(
+    'mbed', 'mbed/libraries/mbed/',
+    ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
+)
 ```
 
 `SConscript-env-kl05z`:
