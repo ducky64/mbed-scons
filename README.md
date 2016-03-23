@@ -162,3 +162,31 @@ env = env_orig.Clone()
 SConscript('SConscript-env-kl05z', variant_dir='build/kl05z', exports='env')
 env_kl05z = env
 ```
+
+## Misc
+
+### mbed RTOS
+The mbed RTOS can be built using the same infrastructure (assuming the
+environment was set up correctly for the base mbed library):
+
+```
+rtos_lib = env.MbedLikeLibrary('rtos', 'mbed/libraries/rtos/',
+                               ['rtx/', 'rtos/'])
+```
+
+### Troubleshooting
+- Some code may require using `nosys.specs` to compile. In that case, add this
+  linker flag:
+
+  ```
+  env.Append(LINKFLAGS='--specs=nosys.specs')
+  ```
+
+- C++11 is supported by GCC but not the default in the environments here (which
+  try to be consistent with mbed generated projects). The default `gnu++98` can
+  be overridden by adding this compiler flag *after* importing the
+  target-specific environment:
+
+  ```
+  env.Append(CXXFLAGS='-std=c++11')
+  ```
