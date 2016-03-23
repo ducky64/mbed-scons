@@ -35,6 +35,8 @@ Environments for some common platforms (like the FRDM-KL25Z) are included in
 `targets/`:
 - `SConscript-mbed-env-kl05z`
 - `SConscript-mbed-env-kl25z`
+- `SConscript-mbed-env-lpc11c14`
+- `SConscript-mbed-env-lpc1549`
 
 These add the MBED\_TARGET, CPPDEFINES, and MBED\_CPU environment variables for
 a particular target. The linker script needs to be specified separately.
@@ -137,6 +139,7 @@ env.Append(LIBS=mbed_lib)
 ```
 
 `SConscript-env-kl05z`:
+
 Similar as above
 
 `Sconstruct` (top-level script):
@@ -145,9 +148,9 @@ env_orig = env
 
 env = env_orig.Clone()
 SConscript('SConscript-env-kl25z', variant_dir='build/kl25z', exports='env')
-env_kl25z_bl = env
+env_kl25z = env
 
 env = env_orig.Clone()
 SConscript('SConscript-env-kl05z', variant_dir='build/kl05z', exports='env')
-env_kl05z_bl = env
+env_kl05z = env
 ```
