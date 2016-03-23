@@ -17,11 +17,22 @@ mbed_lib = env.MbedLikeLibrary('mbed', 'mbed/libraries/mbed/',
                                ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
 ```
 
-where the arguments are (library name, mbed library root, and list of
+where the arguments are library name, mbed library root, and list of
 directories from mbed library root to include headers and sources.
 
+In addition to `MbedLikeLibrary`, these methods are also pre-defined:
+- `Objcopy`: translates `.elf` files into `.bin` files that can be directly
+  flashed onto a mbed mass-storage device. The only input is the source file,
+  and it will generate a `.bin` file of the same name.
+- `SmybolsSize`: from a `.elf` file, generates a `.nm_size.txt` file which
+  contains a list of symbols in the executable, sorted by size. Useful for
+  determining what is bloating your binary when optimizing for space.
+- `Objdump`: from a `.elf` file, generates a `.dump.txt` file which shows a
+  disassembled view of the compiled program.
+
 ### Predefined target-specific environments
-Environments for some common platforms (like the FRDM-KL25Z) are included:
+Environments for some common platforms (like the FRDM-KL25Z) are included in
+`targets/`:
 - `SConscript-mbed-env-kl05z`
 - `SConscript-mbed-env-kl25z`
 
@@ -59,16 +70,13 @@ To actually build mbed firmware using this system, you will need to:
 1. Import the target-specific environment, or write your own.
 
   ```
+  env['MBED_LIB_LINKSCRIPTS_ROOT'] = 'mbed/libraries/mbed'
   SConscript('mbed-scons/SConscript-mbed-env-kl25z')
   ```
 
-1. Add the linker script to `LINKFLAGS`:
-
-  ```
-  env.Append(LINKFLAGS = [
-    '-Tmbed/libraries/mbed/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/MKL25Z4.ld',
-])
-  ```
+  Defining `MBED_LIB_LINKSCRIPTS_ROOT` to the root of the mbed library
+  directory causes the target-specific environment script to automatically
+  generate and add the linker script to `LINKFLAGS`.
 
 1. Build the mbed static library and add it to the global libraries:
 
@@ -97,7 +105,7 @@ To actually build mbed firmware using this system, you will need to:
   myprog = env.Program('myprog', [list_of_your_sources])
   ```
 
-1. Optionally, also make a `.bin` version which can be flashed using the mbed MSD:
+1. Optionally, also make a `.bin` file:
 
   ```
   env.Objcopy(myprog)
@@ -119,16 +127,13 @@ in their own `variant_dir`. For example:
 ```
 Import('env')
 
-SConscript('mbed-scons/SConscript-mbed-env-kl25z', exports='env')
+env['MBED_LIB_LINKSCRIPTS_ROOT'] = 'mbed/libraries/mbed'
+SConscript('mbed-scons/targets/SConscript-mbed-env-kl25z', exports='env')
 
-mbed_lib = env.MbedLikeLibrary('mbed', 'libs/mbed/libraries/mbed/',
+mbed_lib = env.MbedLikeLibrary('mbed', 'mbed/libraries/mbed/',
                                ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
 
 env.Append(LIBS=mbed_lib)
-
-env.Append(LINKFLAGS = [
-  '-Tmbed/libraries/mbed/targets/cmsis/TARGET_Freescale/TARGET_KLXX/TARGET_KL25Z/TOOLCHAIN_GCC_ARM/MKL25Z4.ld',
-])
 ```
 
 `SConscript-env-kl05z`:
