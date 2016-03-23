@@ -1,0 +1,79 @@
+Import('env')
+
+"""A rule for a mbed like library which recursively searches in subpaths
+matching names in env[MBED_TARGET] under directories in device_subpaths.
+Returns a StaticLibrary and adds the necessary device headers to the CPPPATH
+environment variable.
+ignore_sources specifies sources to ignore, relative to root_dir.
+additional_sources specifies sources to add, not relative to root_dir.
+Both can be used to override specific files in the library.
+"""
+def MbedLikeLibrary(env, target, root_dir, device_paths, ignore_sources=[], additional_sources=[]):
+  mbed_target = env['MBED_TARGET']
+  def get_device_subpaths(curr_dir_node):
+    # Get all subdirs that are directories, including the argument directory
+    subdirs = [node for node in curr_dir_node.glob("*") if
+               node.name in mbed_target]
+    alldirs = [curr_dir_node]
+    for subdir in subdirs:
+      alldirs.extend(get_device_subpaths(subdir))
+    return alldirs
+
+  # Prefix mbed dir to paths
+  device_paths = [Dir(root_dir).Dir(device_path) for device_path in device_paths]
+
+  scanned_device_paths = []
+  for device_path in device_paths:
+    scanned_device_paths.extend(get_device_subpaths(device_path))
+
+  env.Append(CPPPATH=scanned_device_paths)
+
+  # Glob all sources in the header paths
+  all_sources = []
+  for device_path in scanned_device_paths:
+    all_sources.extend(device_path.glob('*.c'))
+    all_sources.extend(device_path.glob('*.cpp'))
+    all_sources.extend(device_path.glob('*.S'))
+
+  # Add additional sources and remove ignored ones from final list
+  for ignore_source in ignore_sources:
+    # If the file is not found this will crash (this is intentional)
+    all_sources.remove(Dir(root_dir).File(ignore_source))
+  all_sources.extend([File(src) for src in additional_sources])
+
+  return env.StaticLibrary(target, all_sources)
+
+env.AddMethod(MbedLikeLibrary)
+
+def arm_generator(source, target, env, for_signature):
+  return '$OBJCOPY -O binary %s %s'%(source[0], target[0])
+
+env.Append(BUILDERS = {
+  'Objcopy': Builder(
+    generator=arm_generator,
+    suffix='.bin',
+    src_suffix='.elf'
+  )
+})
+
+def nm_size(source, target, env, for_signature):
+  return 'nm --line-numbers --print-size --size-sort --reverse-sort %s > %s'%(source[0], target[0])
+
+env.Append(BUILDERS = {
+  'SymbolsSize': Builder(
+    generator=nm_size,
+    suffix='.nm_size.txt',
+    src_suffix='.elf'
+  )
+})
+
+def objdump(source, target, env, for_signature):
+  return '$OBJDUMP -Sdhl %s > %s'%(source[0], target[0])
+
+env.Append(BUILDERS = {
+  'Objdump': Builder(
+    generator=objdump,
+    suffix='.dump.txt',
+    src_suffix='.elf'
+  )
+})
