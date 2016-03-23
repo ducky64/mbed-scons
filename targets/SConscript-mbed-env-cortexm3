@@ -1,0 +1,18 @@
+"""Shared environment variable defines for mbed compiles on cortex-m0plus chips.
+"""
+
+Import('env')
+
+env['MBED_CPU'] = 'cortex-m3'
+
+env.Append(MBED_TARGET = [
+  'TARGET_CORTEX_M',
+  'TARGET_M3',
+])
+
+env.Append(CPPDEFINES = env['MBED_TARGET'])
+
+env.Append(CPPDEFINES = [
+  '__CORTEX_M3',
+  'ARM_MATH_CM3',
+])

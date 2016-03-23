@@ -1,0 +1,21 @@
+"""Shared environment variable defines for mbed compiles on the LPC11C14.
+Includes the base mbed environment on GCC.
+"""
+
+Import('env')
+SConscript('SConscript-mbed-env-gcc', exports='env')
+SConscript('SConscript-mbed-env-cortexm0plus', exports='env')
+
+env.Append(MBED_TARGET = [
+  'TARGET_NXP',
+  'TARGET_LPC11XX_11CXX',
+  'TARGET_LPC11CXX',
+  'TARGET_LPC11C14',
+])
+
+env.Append(CPPDEFINES = env['MBED_TARGET'])
+
+if 'MBED_LIB_LINKSCRIPTS_ROOT' in env:
+  env.Append(LINKFLAGS = [
+    '-T$MBED_LIB_LINKSCRIPTS_ROOT/targets/cmsis/TARGET_NXP/TARGET_LPC11XX_11CXX/TOOLCHAIN_GCC_ARM/TARGET_LPC11CXX/LPC11C24.ld',
+  ])
