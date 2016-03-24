@@ -1,4 +1,4 @@
-"""Shared environment variable defines for mbed compiles on the FRDM-KL25Z.
+"""Shared environment variable defines for platform-specific compiles.
 Includes the base mbed environment on GCC.
 """
 

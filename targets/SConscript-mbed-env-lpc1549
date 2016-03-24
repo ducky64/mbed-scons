@@ -1,4 +1,4 @@
-"""Shared environment variable defines for mbed compiles on the LPC1549.
+"""Shared environment variable defines for platform-specific compiles.
 Includes the base mbed environment on GCC.
 """
 

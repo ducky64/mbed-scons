@@ -1,9 +1,12 @@
-"""Shared environment variable defines for mbed compiles on cortex-m0plus chips.
+"""Shared environment variable defines chip-specific compiles.
 """
 
 Import('env')
 
-env['MBED_CPU'] = 'cortex-m3'
+env.Append(MBED_CPU_FLAGS = [
+  '-mcpu=cortex-m3',
+  '-mthumb',
+])
 
 env.Append(MBED_TARGET = [
   'TARGET_CORTEX_M',

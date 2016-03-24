@@ -4,18 +4,21 @@
 Import('env')
 
 env.Append(MBED_CPU_FLAGS = [
-  '-mcpu=cortex-m0plus',
   '-mthumb',
+  '-mcpu=cortex-m4',
+  '-mfpu=fpv4-sp-d16',
+  '-mfloat-abi=hard',
 ])
 
 env.Append(MBED_TARGET = [
   'TARGET_CORTEX_M',
-  'TARGET_M0P',
+  'TARGET_M4',
 ])
 
 env.Append(CPPDEFINES = env['MBED_TARGET'])
 
 env.Append(CPPDEFINES = [
-    '__CORTEX_M0PLUS',
-    'ARM_MATH_CM0PLUS',
+  '__CORTEX_M4',
+  'ARM_MATH_CM4',
+  '__FPU_PRESENT=1',
 ])

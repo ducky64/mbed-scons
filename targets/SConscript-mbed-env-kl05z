@@ -1,4 +1,4 @@
-"""Shared environment variable defines for mbed compiles on the FRDM-KL05Z.
+"""Shared environment variable defines for platform-specific compiles.
 Includes the base mbed environment on GCC.
 """
 
@@ -13,8 +13,6 @@ env.Append(MBED_TARGET = [
 
   'TARGET_FF_ARDUINO',
 ])
-
-env.Append(CPPDEFINES = env['MBED_TARGET'])
 
 if 'MBED_LIB_LINKSCRIPTS_ROOT' in env:
   env.Append(LINKFLAGS = [

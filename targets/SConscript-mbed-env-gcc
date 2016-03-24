@@ -1,7 +1,7 @@
 """Shared environment variable defines for mbed compiles on GCC-ARM.
-Specifies additions to MBED_TARGET, CC/C/CXFLAGS, ASFLAGS, and LINKFLAGS.
-User must define the MBED_CPU variable (like 'cortex-m0plus') and specify the
-linker script.
+Specifies additions to MBED_TARGET, CC/C/CXFLAGS, ASFLAGS, LINKFLAGS, and LIBS.
+User must define the MBED_CPU_FLAGS variable (like with '-mcpu=cortex-m0plus')
+and supply a linker script.
 Optimization levels are also not specified and may be defined elsewhere.
 """
 
@@ -14,13 +14,13 @@ env.Append(MBED_TARGET = [
 
 env.Append(CPPDEFINES = [
   '__MBED__=1',
+  'NDEBUG',
 ])
 
 env.Append(CCFLAGS = [
-  '-mcpu=$MBED_CPU',
-  '-mthumb',
-  '-c',
-  '-g',
+  '$MBED_CPU_FLAGS',
+  '-c',  # compile without linking
+  '-g',  # produce debugging information
   '-fno-common',
   '-fno-exceptions',
   '-fmessage-length=0',
@@ -29,7 +29,6 @@ env.Append(CCFLAGS = [
   '-fomit-frame-pointer',
   '-MMD',
   '-MP',
-  '-DNDEBUG',
 ])
 env.Append(CFLAGS = [
   '-std=gnu99',
@@ -39,21 +38,20 @@ env.Append(CXXFLAGS = [
   '-fno-rtti',
 ])
 env.Append(ASFLAGS = [
-  '-mcpu=$MBED_CPU',
-  '-mthumb',
+  '$MBED_CPU_FLAGS',
 ])
 
 env.Append(LINKFLAGS = [
-  '-mcpu=$MBED_CPU',
-  '-mthumb',
+  '$MBED_CPU_FLAGS',
   '-Wl,--gc-sections',
   '-Wl,--wrap,main',
   '--specs=nano.specs',
+])
 
-  '-lstdc++',
-  '-lsupc++',
-  '-lm',
-  '-lc',
-  '-lgcc',
-  '-lnosys',
+env.Append(LIBS = [
+  'stdc++',
+  'supc++',
+  'm',  # math library
+  'c',  # system-suppled C library
+  'gcc',
 ])
