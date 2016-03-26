@@ -54,4 +54,5 @@ env.Append(LIBS = [
   'm',  # math library
   'c',  # system-suppled C library
   'gcc',
+  'nosys',
 ])
