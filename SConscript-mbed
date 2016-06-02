@@ -26,7 +26,9 @@ def MbedLikeLibrary(env, target, root_dir, device_paths, ignore_sources=[], addi
   for device_path in device_paths:
     scanned_device_paths.extend(get_device_subpaths(device_path))
 
-  env.Append(CPPPATH=scanned_device_paths)
+  # Using srcnode here allows the use of duplicate=0 with VariantDir, otherwise
+  # the CPPPATH is always in the VariantDir, even when duplicate is off
+  env.Append(CPPPATH=[x.srcnode() for x in scanned_device_paths])
 
   # Glob all sources in the header paths
   all_sources = []
