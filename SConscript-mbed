@@ -59,7 +59,7 @@ env.Append(BUILDERS = {
 })
 
 def nm_size(source, target, env, for_signature):
-  return 'nm --line-numbers --print-size --size-sort --reverse-sort %s > %s'%(source[0], target[0])
+  return '$OBJSYMBOLS --line-numbers --print-size --size-sort --reverse-sort %s > %s'%(source[0], target[0])
 
 env.Append(BUILDERS = {
   'SymbolsSize': Builder(
