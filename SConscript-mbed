@@ -58,6 +58,17 @@ env.Append(BUILDERS = {
   )
 })
 
+def nm(source, target, env, for_signature):
+  return '$OBJSYMBOLS --line-numbers --print-size --numeric-sort %s > %s'%(source[0], target[0])
+
+env.Append(BUILDERS = {
+  'Symbols': Builder(
+    generator=nm,
+    suffix='.nm.txt',
+    src_suffix='.elf'
+  )
+})
+
 def nm_size(source, target, env, for_signature):
   return '$OBJSYMBOLS --line-numbers --print-size --size-sort --reverse-sort %s > %s'%(source[0], target[0])
 
