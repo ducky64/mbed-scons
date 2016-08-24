@@ -1,0 +1,14 @@
+# Modifies the environment to use gcc-arm for Program/StaticLibrary/... targets
+
+Import('env')
+
+env['AR'] = 'arm-none-eabi-ar'
+env['AS'] = 'arm-none-eabi-as'
+env['CC'] = 'arm-none-eabi-gcc'
+env['CXX'] = 'arm-none-eabi-g++'
+env['LINK'] = 'arm-none-eabi-g++'                # predefined is 'arm-none-eabi-gcc'
+env['RANLIB'] = 'arm-none-eabi-ranlib'
+env['OBJCOPY'] = 'arm-none-eabi-objcopy'
+env['OBJDUMP'] = 'arm-none-eabi-objdump'
+env['OBJSYMBOLS'] = 'arm-none-eabi-nm'
+env['PROGSUFFIX'] = '.elf'

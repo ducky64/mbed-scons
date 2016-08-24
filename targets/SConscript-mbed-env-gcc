@@ -46,6 +46,7 @@ env.Append(LINKFLAGS = [
   '-Wl,--gc-sections',
   '-Wl,--wrap,main',
   '--specs=nano.specs',
+  '-T$MBED_LINKSCRIPT',
 ])
 
 env.Append(LIBS = [
