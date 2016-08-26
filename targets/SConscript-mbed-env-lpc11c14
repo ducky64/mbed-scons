@@ -6,6 +6,8 @@ Import('env')
 SConscript('SConscript-mbed-env-gcc', exports='env')
 SConscript('SConscript-mbed-env-cortexm0plus', exports='env')
 
+# Can't use the target.json parser since the LPC11C14 isn't in it.
+
 env.Append(MBED_TARGET = [
   'TARGET_NXP',
   'TARGET_LPC11XX_11CXX',
@@ -14,6 +16,25 @@ env.Append(MBED_TARGET = [
 ])
 
 env.Append(CPPDEFINES = env['MBED_TARGET'])
+
+# Guess from the LPC11C24
+env.Append(CPPDEFINES = [
+  'DEVICE_ANALOGIN=1',
+  'DEVICE_CAN=1',
+  'DEVICE_ERROR_PATTERN=1',
+  'DEVICE_I2C=1',
+  'DEVICE_I2CSLAVE=1',
+  'DEVICE_INTERRUPTIN=1',
+  'DEVICE_PORTIN=1',
+  'DEVICE_PORTINOUT=1',
+  'DEVICE_PORTOUT=1',
+  'DEVICE_PWMOUT=1',
+  'DEVICE_SERIAL=1',
+  'DEVICE_SLEEP=1',
+  'DEVICE_SPI=1',
+  'DEVICE_SPISLAVE=1',
+  'DEVICE_STDIO_MESSAGES=1',
+])
 
 if 'MBED_LIB_LINKSCRIPTS_ROOT' in env:
   env['MBED_LINKSCRIPT'] = Dir(env['MBED_LIB_LINKSCRIPTS_ROOT'])\

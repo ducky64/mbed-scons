@@ -11,7 +11,7 @@ Import('env')
 SConscript('SConscript-target-json-parse', exports='env')
 SConscript('SConscript-mbed-env-gcc', exports='env')
 
-env.ConfigureMbedTarget("NUCLEO_F303K8")
+env.ConfigureMbedTarget('NUCLEO_F303K8')
 
 if 'MBED_LIB_LINKSCRIPTS_ROOT' in env:
   env['MBED_LINKSCRIPT'] = Dir(env['MBED_LIB_LINKSCRIPTS_ROOT'])\

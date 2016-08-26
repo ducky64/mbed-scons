@@ -4,17 +4,8 @@ Includes the base mbed environment on GCC.
 
 Import('env')
 SConscript('SConscript-mbed-env-gcc', exports='env')
-SConscript('SConscript-mbed-env-cortexm0plus', exports='env')
 
-env.Append(MBED_TARGET = [
-  'TARGET_Freescale',
-  'TARGET_KLXX',
-  'TARGET_KL05Z',
-
-  'TARGET_FF_ARDUINO',
-])
-
-env.Append(CPPDEFINES = env['MBED_TARGET'])
+env.ConfigureMbedTarget('KL05Z')
 
 if 'MBED_LIB_LINKSCRIPTS_ROOT' in env:
   env['MBED_LINKSCRIPT'] = Dir(env['MBED_LIB_LINKSCRIPTS_ROOT'])\
