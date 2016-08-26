@@ -1,0 +1,19 @@
+"""Shared environment variable defines for platform-specific compiles.
+Includes the base mbed environment on GCC.
+
+WARNING! ST's code relies heavily on weak symbols, which doesn't play well with
+the default linker behavior. It's necessary to manually include the mbed
+library using --Wl,--whole-archive using linker flags.
+"""
+
+Import('env')
+
+SConscript('SConscript-target-json-parse', exports='env')
+SConscript('SConscript-mbed-env-gcc', exports='env')
+
+env.ConfigureMbedTarget('NUCLEO_L432KC')
+
+if 'MBED_LIB_LINKSCRIPTS_ROOT' in env:
+  env['MBED_LINKSCRIPT'] = Dir(env['MBED_LIB_LINKSCRIPTS_ROOT'])\
+      .File('targets/cmsis/TARGET_STM/TARGET_STM32L4/TARGET_NUCLEO_L432KC/TOOLCHAIN_GCC_ARM/STM32L432XX.ld')\
+      .srcnode()
