@@ -1,0 +1,68 @@
+import json
+
+Import('env')
+
+env['MBED_CORE_CONFIG_SCONSCRIPT'] = {
+  'Cortex-M0+': File('SConscript-mbed-env-cortexm0plus').srcnode(),
+  'Cortex-M3': File('SConscript-mbed-env-cortexm3').srcnode(),
+  'Cortex-M4F': File('SConscript-mbed-env-cortexm4').srcnode(),
+}
+
+"""Helper function to do the dict inheritance, basically like dict update but
+list values are appended instead of clobbered.
+""" 
+def target_dict_update(base, add):
+  for key, val in add.items():
+    if key in base:
+      if isinstance(val, list):
+        if base[key] is None:
+          base[key] = []
+        assert isinstance(base[key], list), "%s=%s <= %s, type error" % (key, base[key], val)
+        base[key].extend(val)
+      else:
+        assert not isinstance(base[key], list)
+        base[key] = val
+    else:
+      base[key] = val
+  return base
+
+"""Configures the environment for a mbed target (defined in hal/targets.json)
+by parsing the targets.json file. Only valid with newer versions of the mbed
+library that define this.
+env['MBED_TARGETS_JSON_FILE'] must be configured with the path to the
+targets.jscon file.
+"""
+def ConfigureMbedTarget(env, target_name):
+  assert 'MBED_TARGETS_JSON_FILE' in env, "MBED_TARGET_JSON_FILE must be in env to use targets.json-based configuration"
+  with open(File(env['MBED_TARGETS_JSON_FILE']).abspath) as f:
+    target_json = json.load(f)
+    assert target_name in target_json, "No target '%s' in targets.json" % target_name
+    inherit_chain = [target_name]
+    current_dict = target_json[target_name]
+    while 'inherits' in current_dict:
+      assert len(current_dict['inherits']) == 1, "Multiple inherits not supported yet" 
+      inherit_name = current_dict['inherits'][0]
+      inherit_chain.append(inherit_name)
+      assert inherit_name in target_json, "No inherit target '%s' in targets.json" % target_name
+      current_dict = target_json[inherit_name]
+    
+    target_dict = {}
+    for inherit_name in reversed(inherit_chain):
+      target_dict = target_dict_update(target_dict, target_json[inherit_name])
+
+    assert target_dict['core'] in env['MBED_CORE_CONFIG_SCONSCRIPT'], "Unknown core '%s'" % target_dict['core']
+    SConscript(env['MBED_CORE_CONFIG_SCONSCRIPT'][target_dict['core']], exports='env')
+
+    env.Append(MBED_TARGET='TARGET_' + str(target_name))
+    env.Append(CPPDEFINES='TARGET_' + str(target_name))
+    for label in target_dict['extra_labels']:
+      env.Append(MBED_TARGET='TARGET_' + label)
+      env.Append(CPPDEFINES='TARGET_' + label)
+    
+    for ff in target_dict['supported_form_factors']:
+      env.Append(CPPDEFINES='TARGET_FF_' + ff)
+      
+    for feature in target_dict['device_has']:
+      env.Append(CPPDEFINES='DEVICE_' + feature + '=1')
+    
+env.AddMethod(ConfigureMbedTarget)
