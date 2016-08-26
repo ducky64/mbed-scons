@@ -22,11 +22,13 @@ env.Append(CCFLAGS = [
   '-c',  # compile without linking
   '-g',  # produce debugging information
   '-fno-common',
+  '-fno-delete-null-pointer-checks',
   '-fno-exceptions',
   '-fmessage-length=0',
   '-ffunction-sections',
   '-fdata-sections',
   '-fomit-frame-pointer',
+  '-funsigned-char',
   '-MMD',
   '-MP',
 ])
@@ -45,6 +47,9 @@ env.Append(LINKFLAGS = [
   '$MBED_CPU_FLAGS',
   '-Wl,--gc-sections',
   '-Wl,--wrap,main',
+  '-Wl,--wrap,_malloc_r',
+  '-Wl,--wrap,_free_r',
+  '-Wl,--wrap,_realloc_r',
   '--specs=nano.specs',
   '-T$MBED_LINKSCRIPT',
 ])
