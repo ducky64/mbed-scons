@@ -2,6 +2,7 @@ Import('env')
 
 # Workaround for command line length limitations on Windows
 if env['PLATFORM'] == 'win32':
+  spawn_orig = env['SPAWN']
   try:
     import win32api
     import win32file
@@ -10,47 +11,27 @@ if env['PLATFORM'] == 'win32':
     import win32security
   
     def my_spawn(sh, escape, cmd, args, spawnenv):
-      # check for any special operating system commands
-      if cmd == 'del':
-        for arg in args[1:]:
-            win32file.DeleteFile(arg)
-        return 0
-  
-      for var in spawnenv:
-        spawnenv[var] = spawnenv[var].encode('ascii', 'replace')
-  
-      sAttrs = win32security.SECURITY_ATTRIBUTES()
-      sAttrs.bInheritHandle = 1
-      StartupInfo = win32process.STARTUPINFO()
-      StartupInfo.dwFlags = win32process.STARTF_USESTDHANDLES
-  
-      # Try to detect stdout redirect type commands and forward accordingly
-      # TODO: detect more complex redirects, like ones that specify stdout/stderr
-      if '>' in args:
-        assert args.index('>') == len(args) - 2, "Redirects currently only supported at end of command, got args %s" % args
-        hStdoutFile = win32file.CreateFile(args[-1], win32file.GENERIC_WRITE,
-            0, sAttrs, win32file.CREATE_ALWAYS,
-            win32file.FILE_SHARE_WRITE | win32file.FILE_SHARE_READ,
-            0)
-        StartupInfo.hStdOutput = hStdoutFile
-        args = args[:-2]
-      else:
-        hStdoutFile = None
-        StartupInfo.hStdOutput = win32api.GetStdHandle(win32api.STD_OUTPUT_HANDLE)
-  
-      StartupInfo.hStdError = win32api.GetStdHandle(win32api.STD_ERROR_HANDLE)
-      StartupInfo.hStdInput = win32api.GetStdHandle(win32api.STD_INPUT_HANDLE)
-  
       newargs = ' '.join(map(escape, args[1:]))
       cmdline = cmd + " " + newargs
+      
+      # Don't use this where we don't need it, this causes issues 
+      if len(cmdline) < 8000:
+        return spawn_orig(sh, escape, cmd, args, spawnenv)
+   
+      assert '>' not in cmdline, "Redirection not supported in Windows long command workaround"
   
-      hProcess, hThread, dwPid, dwTid = win32process.CreateProcess(None, cmdline, None, None, 1, 0, spawnenv, None, StartupInfo)
+      newspawnenv = {}
+      for var in spawnenv:
+        newspawnenv[var] = spawnenv[var].encode('ascii', 'replace')
+  
+      sAttrs = win32security.SECURITY_ATTRIBUTES()
+      StartupInfo = win32process.STARTUPINFO()
+  
+      hProcess, hThread, dwPid, dwTid = win32process.CreateProcess(None, cmdline, None, None, 1, 0, newspawnenv, None, StartupInfo)
       win32event.WaitForSingleObject(hProcess, win32event.INFINITE)
       exit_code = win32process.GetExitCodeProcess(hProcess)
       win32file.CloseHandle(hProcess);
       win32file.CloseHandle(hThread);
-      if hStdoutFile is not None:
-        win32file.CloseHandle(hStdoutFile);
       return exit_code
   
     env['SPAWN'] = my_spawn
