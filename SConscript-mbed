@@ -47,46 +47,58 @@ def MbedLikeLibrary(env, target, root_dir, device_paths, ignore_sources=[], addi
 
 env.AddMethod(MbedLikeLibrary)
 
-def arm_generator(source, target, env, for_signature):
-  return '$OBJCOPY -O binary %s %s'%(source[0], target[0])
+if 'OBJCOPYCOM' not in env:
+  env['OBJCOPYCOM'] = '$OBJCOPY -O binary $SOURCE $TARGET'
+
+if 'OBJCOPYCOMSTR' not in env:
+  env['OBJCOPYCOMSTR'] = '$OBJCOPYCOMSTR'
 
 env.Append(BUILDERS = {
   'Objcopy': Builder(
-    generator=arm_generator,
+    action=Action('$OBJCOPYCOM', '$OBJCOPYCOMSTR'),
     suffix='.bin',
     src_suffix='.elf'
   )
 })
 
-def nm(source, target, env, for_signature):
-  return '$OBJSYMBOLS --line-numbers --print-size --numeric-sort %s > %s'%(source[0], target[0])
+if 'OBJDUMPCOM' not in env:
+  env['OBJDUMPCOM'] = '$OBJDUMP -Sdhl $SOURCE > $TARGET'
+
+if 'OBJDUMPCOMSTR' not in env:
+  env['OBJDUMPCOMSTR'] = '$OBJDUMPCOM'
+
+env.Append(BUILDERS = {
+  'Objdump': Builder(
+    action=Action('$OBJDUMPCOM', '$OBJDUMPCOMSTR'),
+    suffix='.dump.txt',
+    src_suffix='.elf'
+  )
+})
+
+if 'SYMBOLSCOM' not in env:
+  env['SYMBOLSCOM'] = '$OBJSYMBOLS --line-numbers --print-size --numeric-sort $SOURCE > $TARGET'
+
+if 'SYMBOLSCOMSTR' not in env:
+  env['SYMBOLSCOMSTR'] = '$SYMBOLSCOM'
 
 env.Append(BUILDERS = {
   'Symbols': Builder(
-    generator=nm,
+    action=Action('$SYMBOLSCOM', '$SYMBOLSCOMSTR'),
     suffix='.nm.txt',
     src_suffix='.elf'
   )
 })
 
-def nm_size(source, target, env, for_signature):
-  return '$OBJSYMBOLS --line-numbers --print-size --size-sort --reverse-sort %s > %s'%(source[0], target[0])
+if 'SYMBOLSIZESCOM' not in env:
+  env['SYMBOLSIZESCOM'] = '$OBJSYMBOLS --line-numbers --print-size --size-sort --reverse-sort $SOURCE > $TARGET'
+
+if 'SYMBOLSIZESCOMSTR' not in env:
+  env['SYMBOLSIZESCOMSTR'] = '$SYMBOLSIZESCOM'
 
 env.Append(BUILDERS = {
   'SymbolsSize': Builder(
-    generator=nm_size,
+    action=Action('$SYMBOLSIZESCOM', '$SYMBOLSIZESCOMSTR'),
     suffix='.nm_size.txt',
-    src_suffix='.elf'
-  )
-})
-
-def objdump(source, target, env, for_signature):
-  return '$OBJDUMP -Sdhl %s > %s'%(source[0], target[0])
-
-env.Append(BUILDERS = {
-  'Objdump': Builder(
-    generator=objdump,
-    suffix='.dump.txt',
     src_suffix='.elf'
   )
 })
