@@ -1,27 +1,35 @@
 # mbed-scons
-SCons rules for compiling a mbed library with gcc-arm
+SCons helpers for configuring mbed targets with gcc-arm.
 
 ## Usage
 ### SConscript-mbed
-The `SConscript-mbed` file contains rules for a mbed-like library, where
-the path to the target (like `TARGET_Freescale`, `TARGET_KLXX`) is defined in
-the environment variable `MBED_TARGET`. The build system will automatically
-recurse the mbed source directories accordingly. An example mbed
-`StaticLibrary` build would be (assuming you submoduled this repository into
-`mbed-scons` and the `mbedmicro/mbed` library into `mbed`:
+The `SConscript-mbed` file contains helper functions to set up a environment
+that can build mbed targets with gcc-arm.
+
+Example mbed StaticLibrary build for the NUCLEO_L432KC target:
 
 ```
 Export('env')
 SConscript('mbed-scons/SConscript-mbed')
-mbed_lib = env.MbedLikeLibrary('mbed', 'mbed/libraries/mbed/',
-                               ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
+
+env.ConfigureMbedTarget('NUCLEO_L432KC', 'mbed/hal/targets.json')
+mbed_paths = env.GetMbedSourceDirectories('mbed/hal')
+env.Append(CPPPATH=mbed_paths)
+env['MBED_LINKSCRIPT'] = env.GetMbedLinkscript(mbed_paths)
+mbed_lib = env.StaticLibrary('mbed', env.GetMbedSources(mbed_paths))
+env.Prepend(LIBS = mbed_lib)
 ```
 
-where the arguments are library name, mbed library root, and list of
-directories from mbed library root to include headers and sources.
-
-In addition to `MbedLikeLibrary`, these methods are also pre-defined:
-- `Objcopy`: translates `.elf` files into `.bin` files that can be directly
+The available environment actions are:
+- `ConfigureMbedTarget`: configures `env` based on the target name (first
+  argument) found in mbed's `targets.json` file (second argument).
+- `GetMbedSourceDirectories`: given a configured `env` (above), returns a
+  list of all source directories for the configured target.
+- `GetMbedSources`: from a list of all source directories, returns a list of
+  all source files (to build into a StaticLibrary, for example).
+- `GetMbedLinkscript`: from a list of all source directories, returns the
+  linker script to use. 
+- `Binary`: translates `.elf` files into `.bin` files that can be directly
   flashed onto a mbed mass-storage device. The only input is the source file,
   and it will generate a `.bin` file of the same name.
 - `SmybolsSize`: from a `.elf` file, generates a `.nm_size.txt` file which
@@ -30,37 +38,18 @@ In addition to `MbedLikeLibrary`, these methods are also pre-defined:
 - `Objdump`: from a `.elf` file, generates a `.dump.txt` file which shows a
   disassembled view of the compiled program.
 
-### Predefined target-specific environments
-Environments for some common platforms (like the FRDM-KL25Z) are included in
-`targets/`:
-- `SConscript-mbed-env-kl05z`
-- `SConscript-mbed-env-kl25z`
-- `SConscript-mbed-env-lpc11c14`
-- `SConscript-mbed-env-lpc1549`
-
-These add the MBED\_TARGET, CPPDEFINES, and MBED\_CPU environment variables for
-a particular target. The linker script needs to be specified separately.
-
 ### Quickstart
 To actually build mbed firmware using this system, you will need to:
-1. Set the correct compilers:
-
-  ```
-  env['AR'] = 'arm-none-eabi-ar'
-  env['AS'] = 'arm-none-eabi-as'
-  env['CC'] = 'arm-none-eabi-gcc'
-  env['CXX'] = 'arm-none-eabi-g++'
-  env['LINK'] = 'arm-none-eabi-g++'
-  env['RANLIB'] = 'arm-none-eabi-ranlib'
-  env['OBJCOPY'] = 'arm-none-eabi-objcopy'
-  env['OBJDUMP'] = 'arm-none-eabi-objdump'
-  env['PROGSUFFIX'] = '.elf'
-  ```
-
 1. Export your environment (as `env`) so the included scripts can do their magic:
 
   ```
   Export('env')
+  ```
+  
+1. Set the correct compilers.
+
+  ```
+  SConscript('mbed-scons/SConscript-env-gcc-arm')
   ```
 
 1. Import `SConscript-mbed`
@@ -69,31 +58,39 @@ To actually build mbed firmware using this system, you will need to:
   SConscript('mbed-scons/SConscript-mbed')
   ```
 
-1. Import the target-specific environment, or write your own.
+1. Configure the environment for your target (the Nucleo L432KC, in this example).
 
   ```
-  env['MBED_LIB_LINKSCRIPTS_ROOT'] = 'mbed/libraries/mbed'
-  SConscript('mbed-scons/SConscript-mbed-env-kl25z')
+  env.ConfigureMbedTarget('NUCLEO_L432KC', 'mbed/hal/targets.json')
   ```
 
-  Defining `MBED_LIB_LINKSCRIPTS_ROOT` to the root of the mbed library
-  directory causes the target-specific environment script to automatically
-  generate and add the linker script to `LINKFLAGS`.
-
-1. Build the mbed static library and add it to the global libraries:
+1. Find the source directories for your target, and add them to `CPPPATH`.
 
   ```
-  env.Prepend(LIBS =
-    env.MbedLikeLibrary(
-      'mbed', 'mbed/libraries/mbed/',
-      ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
-  )
+  mbed_paths = env.GetMbedSourceDirectories('mbed/hal')
+  env.Append(CPPPATH=mbed_paths)
+  ```
+
+1. Set the linker script.
+
+  ```
+  env['MBED_LINKSCRIPT'] = env.GetMbedLinkscript(mbed_paths)
+  ```
+
+1. Build the static library and add it to `LIBS`.
+
+  ```
+  mbed_lib = env.StaticLibrary('mbed', env.GetMbedSources(mbed_paths))
+  env.Prepend(LIBS = mbed_lib)
   ```
 
   `Prepend` is used since GCC's linker discards unused parts of libraries as
   they are searched, so the "top-level" library must come first. If libraries
   are specified in dependency order (with "base" libraries first), then using
   `Prepend` consistently can avoid nastiness like `--Wl,--whole-archive`.
+  
+  However, `--Wl,--whole-archive` may be necessary for targets that use weak
+  symbols.
 
 1. Optionally, turn on compiler optimizations:
   - optimizing for size:
@@ -117,7 +114,7 @@ To actually build mbed firmware using this system, you will need to:
 1. Optionally, also make a `.bin` file:
 
   ```
-  env.Objcopy(myprog)
+  env.Binary(myprog)
   ```
 
 ### Advanced: Multi-target builds
@@ -130,51 +127,18 @@ If using a shared mbed library source directory, make sure the mbed static
 libraries are built in their own VariantDirs, so that the same files from
 different platforms don't conflict. This can be accomplished by defining the
 mbed library for each environment in its own SConscript file, then calling them
-in their own `variant_dir`. For example:
-
-`SConscript-env-kl25z`:
-```
-Import('env')
-
-env['MBED_LIB_LINKSCRIPTS_ROOT'] = 'mbed/libraries/mbed'
-SConscript('mbed-scons/targets/SConscript-mbed-env-kl25z', exports='env')
-
-env.Prepend(LIBS =
-  env.MbedLikeLibrary(
-    'mbed', 'mbed/libraries/mbed/',
-    ['api/', 'common/', 'hal/', 'targets/cmsis/', 'targets/hal/'])
-)
-```
-
-`SConscript-env-kl05z`:
-
-Similar as above
-
-`Sconstruct` (top-level script):
-```
-env_orig = env
-
-env = env_orig.Clone()
-SConscript('SConscript-env-kl25z', variant_dir='build/kl25z', exports='env')
-env_kl25z = env
-
-env = env_orig.Clone()
-SConscript('SConscript-env-kl05z', variant_dir='build/kl05z', exports='env')
-env_kl05z = env
-```
+in their own `variant_dir`.
 
 ## Misc
-
-### mbed RTOS
-The mbed RTOS can be built using the same infrastructure (assuming the
-environment was set up correctly for the base mbed library):
-
-```
-rtos_lib = env.MbedLikeLibrary('rtos', 'mbed/libraries/rtos/',
-                               ['rtx/', 'rtos/'])
-```
-
 ### Troubleshooting
+- You may need to `.srcnode()` all the `CPPPATH`s if using in a SConscript
+  invoked with `duplicate=0`.
+  
+  ```
+  mbed_paths = env.GetMbedSourceDirectories('mbed/hal')
+  env.Append(CPPPATH=[x.srcnode() for x in mbed_paths])
+  ```
+  
 - Some code may require using `nosys.specs` to compile. In that case, add this
   linker flag:
 
