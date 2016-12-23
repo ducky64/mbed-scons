@@ -75,15 +75,20 @@ env.AddMethod(ConfigureMbedTarget)
 Assumes env['MBED_TARGET'] is set to all the target paths.
 Takes in the root directory to start searching from.
 """
-env.SetDefault(MBED_DIR_PATHS = ['api', 'common', 'hal', 'targets/cmsis', 'targets/hal'])
+env.SetDefault(MBED_DIRS = ['.', 'drivers', 'hal', 'platform'])
+env.SetDefault(MBED_TARGET_DIRS = ['cmsis', 'targets'])
 def GetMbedSourceDirectories(env, root_dir):
-  mbed_target = env['MBED_TARGET']
-  device_paths = env['MBED_DIR_PATHS']
+  mbed_target = env['MBED_TARGET'] + ['device']
+  device_paths = env['MBED_TARGET_DIRS']
   root_dir = Dir(root_dir)
     
   # Prefix mbed dir to paths
   device_paths = [root_dir.Dir(device_path) for device_path in device_paths]
   
+  # Initialize with static (non-target-dependent) directories
+  scanned_device_paths = [root_dir.Dir(dir_path) for dir_path in env['MBED_DIRS']]
+  
+  # Recurse into device (target-dependent) directories
   def get_device_subpaths(curr_dir_node):
     # Get all subdirs that are directories, including the argument directory
     subdirs = [node for node in curr_dir_node.glob("*") if
@@ -93,7 +98,6 @@ def GetMbedSourceDirectories(env, root_dir):
       alldirs.extend(get_device_subpaths(subdir))
     return alldirs
   
-  scanned_device_paths = []
   for device_path in device_paths:
     scanned_device_paths.extend(get_device_subpaths(device_path))
     
