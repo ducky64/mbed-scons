@@ -47,9 +47,8 @@ env.Append(LINKFLAGS = [
   '$MBED_CPU_FLAGS',
   '-Wl,--gc-sections',
   '-Wl,--wrap,main',
-  '-Wl,--wrap,_malloc_r',
-  '-Wl,--wrap,_free_r',
-  '-Wl,--wrap,_realloc_r',
+  '-Wl,--wrap,exit',
+  '-Wl,--wrap,atexit',
   '--specs=nano.specs',
   '-T$MBED_LINKSCRIPT',
 ])

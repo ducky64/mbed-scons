@@ -14,7 +14,7 @@ env.SetDefault(MBED_CORE_CONFIG_SCONSCRIPT = {
 
 """Helper function to do the dict inheritance, basically like dict update but
 list values are appended instead of clobbered.
-""" 
+"""
 def target_dict_update(base, add):
   for key, val in add.items():
     if key in base:
@@ -42,19 +42,19 @@ def ConfigureMbedTarget(env, target_name, targets_file):
     inherit_chain = [target_name]
     current_dict = target_json[target_name]
     while 'inherits' in current_dict:
-      assert len(current_dict['inherits']) == 1, "Multiple inherits not supported yet" 
+      assert len(current_dict['inherits']) == 1, "Multiple inherits not supported yet"
       inherit_name = current_dict['inherits'][0]
       inherit_chain.append(inherit_name)
       assert inherit_name in target_json, "No inherit target '%s' in targets.json" % target_name
       current_dict = target_json[inherit_name]
-    
+
     target_dict = {}
     for inherit_name in reversed(inherit_chain):
       target_dict = target_dict_update(target_dict, target_json[inherit_name])
 
     for script in env['MBED_COMMON_CONFIG_SCONSCRIPT']:
       SConscript(script, exports='env')
-    
+
     assert target_dict['core'] in env['MBED_CORE_CONFIG_SCONSCRIPT'], "Unknown core '%s'" % target_dict['core']
     SConscript(env['MBED_CORE_CONFIG_SCONSCRIPT'][target_dict['core']], exports='env')
 
@@ -63,10 +63,10 @@ def ConfigureMbedTarget(env, target_name, targets_file):
     for label in target_dict['extra_labels']:
       env.Append(MBED_TARGET='TARGET_' + label)
       env.Append(CPPDEFINES='TARGET_' + label)
-    
+
     for ff in target_dict['supported_form_factors']:
       env.Append(CPPDEFINES='TARGET_FF_' + ff)
-      
+
     for feature in target_dict['device_has']:
       env.Append(CPPDEFINES='DEVICE_' + feature + '=1')
 env.AddMethod(ConfigureMbedTarget)
@@ -81,13 +81,13 @@ def GetMbedSourceDirectories(env, root_dir):
   mbed_target = env['MBED_TARGET'] + ['device']
   device_paths = env['MBED_TARGET_DIRS']
   root_dir = Dir(root_dir)
-    
+
   # Prefix mbed dir to paths
   device_paths = [root_dir.Dir(device_path) for device_path in device_paths]
-  
+
   # Initialize with static (non-target-dependent) directories
   scanned_device_paths = [root_dir.Dir(dir_path) for dir_path in env['MBED_DIRS']]
-  
+
   # Recurse into device (target-dependent) directories
   def get_device_subpaths(curr_dir_node):
     # Get all subdirs that are directories, including the argument directory
@@ -97,10 +97,10 @@ def GetMbedSourceDirectories(env, root_dir):
     for subdir in subdirs:
       alldirs.extend(get_device_subpaths(subdir))
     return alldirs
-  
+
   for device_path in device_paths:
     scanned_device_paths.extend(get_device_subpaths(device_path))
-    
+
   return scanned_device_paths
 env.AddMethod(GetMbedSourceDirectories)
 
@@ -112,16 +112,16 @@ def GetMbedSources(env, source_directories):
     all_sources.extend(device_path.glob('*.S'))
   return all_sources
 env.AddMethod(GetMbedSources)
-    
+
 def GetMbedLinkscript(env, source_directories):
   all_sources = []
   for device_path in source_directories:
     all_sources.extend(device_path.glob('*.ld'))
-  assert all_sources, "No linkerscripts found"  
+  assert all_sources, "No linkerscripts found, searched %s" % ([str(x) for x in source_directories])
   assert len(all_sources) == 1, "Multiple linkerscripts found: %s" % all_sources
   return all_sources[0]
 env.AddMethod(GetMbedLinkscript)
-    
+
 env.SetDefault(BINCOM = '$OBJCOPY -O binary $SOURCE $TARGET')
 env.SetDefault(BINCOMSTR = '$BINCOMSTR')
 env.Append(BUILDERS = {
