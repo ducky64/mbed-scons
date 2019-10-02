@@ -1,3 +1,5 @@
+import warnings
+
 Import('env')
 
 # Workaround for command line length limitations on Windows
@@ -22,7 +24,7 @@ if env['PLATFORM'] == 'win32':
 
       newspawnenv = {}
       for var in spawnenv:
-        newspawnenv[var] = spawnenv[var].encode('ascii', 'replace')
+        newspawnenv[var] = str(spawnenv[var])
 
       sAttrs = win32security.SECURITY_ATTRIBUTES()
       StartupInfo = win32process.STARTUPINFO()
@@ -35,6 +37,5 @@ if env['PLATFORM'] == 'win32':
       return exit_code
 
     env['SPAWN'] = my_spawn
-
   except ImportError:
     warnings.warn("Unable to import Python for Windows extensions (pywin32), a necessary workaround for long (>8192 char) command line commands")

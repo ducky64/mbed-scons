@@ -63,6 +63,10 @@ def ConfigureMbedTarget(env, target_name, targets_file):
     for label in target_dict['extra_labels']:
       env.Append(MBED_TARGET='TARGET_' + label)
       env.Append(CPPDEFINES='TARGET_' + label)
+    if 'extra_labels_add' in target_dict:
+      for label in target_dict['extra_labels_add']:
+        env.Append(MBED_TARGET='TARGET_' + label)
+        env.Append(CPPDEFINES='TARGET_' + label)
 
     for ff in target_dict['supported_form_factors']:
       env.Append(CPPDEFINES='TARGET_FF_' + ff)
