@@ -1,3 +1,5 @@
+# DEPRECATED - use PlatformIO instead!
+
 # mbed-scons
 SCons helpers for configuring mbed targets with gcc-arm.
 
